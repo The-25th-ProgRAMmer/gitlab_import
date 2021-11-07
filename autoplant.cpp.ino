@@ -10,11 +10,11 @@ DS1307 clock;               //define a object of DS1307 class
 dht DHT;                  //define a temperature object. 
 HX711 WeightSensor;        //define a weight sensor object. 
 
-//we can calibrate the sensor but for now, I will use a placeholder figure that I found on demo that we can change later on. 
+//we can calibrate the sensor but for now, I will use a placeholder figure that we can change later on. 
 #define calibration_factor -7050.0
 
 
-const int RELAY      = 4;        // Relay Pin to turn the pump on set to D4
+const int RELAY      = 2;        // Relay Pin to turn the pump on set to D2
 const int BUZZER     = 7;        // Buzzer set to D7
 const int MOISTURE_SENSOR = A0;  // Moisture Sensor set to A0
 
@@ -31,12 +31,11 @@ int battery_value = 0;            //read the battery level.
 int dryLimit    = 420;      // how dry you will allow your plants to be on average
 int waterLimit  = 420;      //how wet we will have the enclosure 
 int EnclosureTemp = 30;     //how hot we will have the enclosure 
-float WeightValue = 35.90;     //place value which we will test and change. 
+float WeightValue = 35.90;      //place value which we will test and change. 
 
 void setup()
 {
   //some of the intiliasation can be done in seperate files to keep the main part of the code clean. 
-  //I think separating them into header files for each sensor might work. 
   
   Serial.begin(9600);       // start the serial at 9600 baud
   clock.begin();            // start reading the RTC
@@ -67,7 +66,7 @@ void WaterPump()
   // Check every minute to see that the moisture level is where you want it, water if it's too dry
   switch (clock.second) // When the time on the RTC reads a value in seconds
   {
-    case 30: // at the 30 second mark, can be changed. 
+    case 30: // at the 30 second mark
       delay(2);
       // read the analog value of the first sensor:
       moistValue = analogRead(MOISTURE_SENSOR);
@@ -81,13 +80,13 @@ void WaterPump()
       if(moistValue >= dryLimit)
       {
         digitalWrite(LED_STRIP, HIGH);     // turn the LED on (HIGH is the voltage level)
-        digitalWrite(RELAY, HIGH);   // turn the Relay on (HIGH is the voltage level)
+        digitalWrite(RELAY, LOW);   // turn the Relay on 
         delay(10000);                // wait for 10 seconds
-        digitalWrite(RELAY, LOW);    // turn the Relay off by making the voltage LOW
+        digitalWrite(RELAY, LOW);    // turn the Relay off by making the voltage HIGH
         digitalWrite(LED_STRIP, LOW);      // turn the LED off by making the voltage LOW
         delay(1000);                 // wait for 1 second
       }
-      delay(1000); // let the second pass to avoid multiple readings over serial      
+      delay(1000); // let the second pass to avoid multiple readings over serial
   }
 
   // Once a day at 11:00:01, water the plants and give it light regardless of moisture levels indicated
@@ -101,14 +100,14 @@ void WaterPump()
           {
             case 1: //at 1 second
               digitalWrite(LED_STRIP, HIGH);     // turn the LED on (HIGH is the voltage level)
-              digitalWrite(RELAY, HIGH);   // turn the Relay on (HIGH is the voltage level)
+              digitalWrite(RELAY, LOW);   // turn the Relay on
               delay(10000);                // wait for 10 seconds
               digitalWrite(LED_STRIP, LOW);      // turn the LED off by making the voltage LOW
-              digitalWrite(RELAY, LOW);    // turn the Relay off by making the voltage LOW
+              digitalWrite(RELAY, HIGH);    // turn the Relay off. 
               delay(1000);                 // wait for 1 second
           }
-        }
-    }
+      }
+  }
 }
 
 void TempCheck()
@@ -124,7 +123,7 @@ void TempCheck()
   
       //cut off nutrient supply of water and light. 
       digitalWrite(LED_STRIP, LOW); 
-      digitalWrite(RELAY, LOW); 
+      digitalWrite(RELAY, HIGH); 
   }
   else
   {
@@ -148,12 +147,12 @@ void WeightCheck()
         //Display this on the E-ink display too. 
 
         //cut off water supply obviously 
-        digitalWrite(RELAY, LOW); 
+        digitalWrite(RELAY, HIGH); 
         digitalWrite(LED_STRIP, LOW); 
       }
       else 
       {
-        digitalWrite(BUZZER, LOW); 
+        digitalWrite(BUZZER, HIGH); 
         Serial.println("Water Bottle is ok!"); 
       }
 }
