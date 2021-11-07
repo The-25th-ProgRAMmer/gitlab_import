@@ -31,7 +31,7 @@ int battery_value = 0;            //read the battery level.
 int dryLimit    = 420;      // how dry you will allow your plants to be on average
 int waterLimit  = 420;      //how wet we will have the enclosure 
 int EnclosureTemp = 30;     //how hot we will have the enclosure 
-float WeightValue = 35.90      //place value which we will test and change. 
+float WeightValue = 35.90;     //place value which we will test and change. 
 
 void setup()
 {
