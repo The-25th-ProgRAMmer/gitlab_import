@@ -1,32 +1,22 @@
-/*starting code. Feel free to comment 
-and give me pointers on where I should change it and why it doesn't work*/
+//NOTE: Serial, pinMode, digitalWrite and delay errors should be fixed once wire.h is added to repo
 
-#include <Wire.h>
-#include "DS1307.h" //add library for RTC DONE! 
-#include <dht.h> //add library for the temperature + moisture sensor DONE!
-#include "HX711.h" //add library for the weight sensor DONE!
 
-DS1307 clock;               //define a object of DS1307 class
-dht DHT;                  //define a temperature object. 
-HX711 WeightSensor;        //define a weight sensor object. 
+/*#include <Wire.h> COMMENTED OUT THE INCLUDES FOR THE SAKE OF BUG FIXING
+#include "DS1307.h" 
+#include <dht.h> 
+#include "HX711.h" */
+#include "constants.h"
+
+//defining sensor objects
+DS1307 clock = DS1307();               
+dht DHT = dht();                 //fixed notation  
+HX711 WeightSensor = HX711();        
 
 //we can calibrate the sensor but for now, I will use a placeholder figure that we can change later on. 
 #define calibration_factor -7050.0
 
-
-const int RELAY      = 2;        // Relay Pin to turn the pump on set to D2
-const int BUZZER     = 7;        // Buzzer set to D7
-const int MOISTURE_SENSOR = A0;  // Moisture Sensor set to A0
-
-const int LED_STRIP = 6;         //LED STRIP on and off  
-const int TEMP_SENS = 5;         //temperature pin set to D5
-
-const int WEIGHT_CLK = A4;        //CLK Pin and Data out pin to the nanoboard. 
-const int WEIGHT_DOUT = A5; 
-
 int moistValue = 0;              // read moisture value 
 int battery_value = 0;            //read the battery level. 
-
 
 int dryLimit    = 420;      // how dry you will allow your plants to be on average
 int waterLimit  = 420;      //how wet we will have the enclosure 
@@ -39,23 +29,24 @@ void setup()
   
   Serial.begin(9600);       // start the serial at 9600 baud
   clock.begin();            // start reading the RTC
-  //setup stuff can be done in a header file to keep the code clean. 
+ 
   pinMode(RELAY, OUTPUT);   // set relay pin to output
   pinMode(LED_STRIP, OUTPUT);     // set led pin to output
 
   //Weight Sensor Setup. 
-  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
-  scale.set_scale(calibration_factor);
-  scale.tare();   //reset scale to 0 assuming no weight. 
+  WeightSensor.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  WeightSensor.set_scale(calibration_factor);
+  WeightSensor.tare();   //reset scale to 0 assuming no weight. 
   
 }
 
 void loop()
 {
+
   WaterPump();             // Water Pump + Relay Function 
   TempCheck();            //checks the temperature
   WeightCheck();         //checks the weight of the water cannister. 
-  //BatteryLevel();         //reads the battery level and displays it. 
+  BatteryLevel();         //reads the battery level and displays it. 
 }
 
 
@@ -120,7 +111,7 @@ void TempCheck()
       Serial.println(DHT.humidity); 
       
       //Rogier can programme the E-ink Sectiom. 
-  
+      Display();
       //cut off nutrient supply of water and light. 
       digitalWrite(LED_STRIP, LOW); 
       digitalWrite(RELAY, HIGH); 
@@ -137,7 +128,7 @@ void TempCheck()
 
 void WeightCheck()
 {
-      float weight = scale.get_units()
+      float weight = WeightSensor.get_units()
 
       //if the water bottle isn't heavy enough, it won't have enough water to seed the plants. 
       if (weight < WeightValue)
@@ -145,14 +136,22 @@ void WeightCheck()
         digitalWrite(BUZZER, HIGH); 
         Serial.println("Add more water to the water cannister please!") 
         //Display this on the E-ink display too. 
-
+        Display();
         //cut off water supply obviously 
         digitalWrite(RELAY, HIGH); 
         digitalWrite(LED_STRIP, LOW); 
       }
       else 
       {
-        digitalWrite(BUZZER, HIGH); 
+        digitalWrite(BUZZER, LOW); //could be wrong but I think this is supposed to be LOW and not HIGH so I changed it.
         Serial.println("Water Bottle is ok!"); 
       }
+}
+
+void BatteryLevel(){
+
+}
+
+void Display(){
+  //E-ink to be written by Rogier
 }
