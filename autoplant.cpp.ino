@@ -1,10 +1,7 @@
-//NOTE: Serial, pinMode, digitalWrite and delay errors should be fixed once wire.h is added to repo
-
-
-/*#include <Wire.h> COMMENTED OUT THE INCLUDES FOR THE SAKE OF BUG FIXING
+#include <Wire.h> 
 #include "DS1307.h" 
 #include <dht.h> 
-#include "HX711.h" */
+#include "HX711.h" 
 #include "constants.h"
 
 //defining sensor objects
@@ -12,25 +9,28 @@ DS1307 clock = DS1307();
 dht DHT = dht();                 //fixed notation  
 HX711 WeightSensor = HX711();        
 
-//we can calibrate the sensor but for now, I will use a placeholder figure that we can change later on. 
+//placeholder figure to calibrate sensor (has potential to cause bugs)
 #define calibration_factor -7050.0
 
 int moistValue = 0;              // read moisture value 
 int battery_value = 0;            //read the battery level. 
 
-int dryLimit    = 420;      // how dry you will allow your plants to be on average
-int waterLimit  = 420;      //how wet we will have the enclosure 
-int EnclosureTemp = 30;     //how hot we will have the enclosure 
-float WeightValue = 35.90;      //place value which we will test and change. 
+int dryLimit    = 420;      //most of these, the user should be able to set in app
+int waterLimit  = 420;       
+int EnclosureTemp = 30;     
+float WeightValue = 35.90;      
 
-void setup()
-{
-  //some of the intiliasation can be done in seperate files to keep the main part of the code clean. 
-  
+int waterHour;//sync with IoT to store the variables.
+int waterMinute;
+
+int LEDHour;//sync with IoT to store the variables.
+int LEDMinute;
+
+void setup(){ 
   Serial.begin(9600);       // start the serial at 9600 baud
-  clock.begin();            // start reading the RTC
+  clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
  
-  pinMode(RELAY, OUTPUT);   // set relay pin to output
+  pinMode(PUMP, OUTPUT);   // set relay pin to output
   pinMode(LED_STRIP, OUTPUT);     // set led pin to output
 
   //Weight Sensor Setup. 
@@ -40,118 +40,92 @@ void setup()
   
 }
 
-void loop()
-{
-
-  WaterPump();             // Water Pump + Relay Function 
-  TempCheck();            //checks the temperature
-  WeightCheck();         //checks the weight of the water cannister. 
-  BatteryLevel();         //reads the battery level and displays it. 
+void loop(){
+  Display();              
+  TempCheck();            
+  WeightCheck();          
+  BatteryLevel();
+  LEDCheck();
+  WaterPump();         
 }
 
 
-void WaterPump()
-{
-  clock.getTime(); //grab the time from the RTC every clock cycle
-
-  // Check every minute to see that the moisture level is where you want it, water if it's too dry
-  switch (clock.second) // When the time on the RTC reads a value in seconds
+void WaterPump(){
+  // Water Pump + Relay Function 
+  moistValue = analogRead(MOISTURE_SENSOR);
+  Serial.print("sensor 0 = ");
+  Serial.print(moistValue);
+  Serial.println("  ");
+  if(moistValue >= dryLimit)
   {
-    case 30: // at the 30 second mark
-      delay(2);
-      // read the analog value of the first sensor:
-      moistValue = analogRead(MOISTURE_SENSOR);
-      // print the results to the serial monitor:
-      Serial.print("sensor 0 = ");
-      Serial.print(moistValue);
-      Serial.println("  ");
-      delay(2);
-
-      // if the plants are on average too dry, run the pump for 10 seconds.
-      if(moistValue >= dryLimit)
-      {
-        digitalWrite(LED_STRIP, HIGH);     // turn the LED on (HIGH is the voltage level)
-        digitalWrite(RELAY, LOW);   // turn the Relay on 
-        delay(10000);                // wait for 10 seconds
-        digitalWrite(RELAY, LOW);    // turn the Relay off by making the voltage HIGH
-        digitalWrite(LED_STRIP, LOW);      // turn the LED off by making the voltage LOW
-        delay(1000);                 // wait for 1 second
-      }
-      delay(1000); // let the second pass to avoid multiple readings over serial
+    digitalWrite(PUMP, LOW);   
+    Serial.print("Pump on"); 
+    //Ticker function here.
+    digitalWrite(PUMP, HIGH);    //pump high = off 
+    Serial.print("Pump off");     
   }
-
   // Once a day at 11:00:01, water the plants and give it light regardless of moisture levels indicated
-  switch (clock.hour)
-  {
-    case 11: //at 11AM
-      switch (clock.minute)
-      {
-        case 0: //at 0 minutes
-          switch (clock.second)
-          {
-            case 1: //at 1 second
-              digitalWrite(LED_STRIP, HIGH);     // turn the LED on (HIGH is the voltage level)
-              digitalWrite(RELAY, LOW);   // turn the Relay on
-              delay(10000);                // wait for 10 seconds
-              digitalWrite(LED_STRIP, LOW);      // turn the LED off by making the voltage LOW
-              digitalWrite(RELAY, HIGH);    // turn the Relay off. 
-              delay(1000);                 // wait for 1 second
-          }
-      }
+  clock.getTime();
+  if(clock.hour == waterHour && clock.minute == waterMinute){
+    digitalWrite(PUMP, LOW);   
+    //Ticker function to be called here
+    digitalWrite(PUMP, HIGH);    
   }
 }
+  
 
-void TempCheck()
-{
-  if (DHT.temperature > EnclosureTemp)//change value depending on what we find in testing. 
+
+void LEDCheck(){
+  //write a function to check the current time and minute then turn on led if the user set time is 
+  clock.getTime();
+  if(clock.hour == LEDHour && clock.minute == LEDMinute){
+    digitalWrite(LED_STRIP,HIGH);
+    //Ticker function
+    digitalWrite(LED_STRIP,LOW);
+}
+void TempCheck(){
+  //checks the temperature
+  while(DHT.temperature > EnclosureTemp)
   {
-      digitalWrite(BUZZER, HIGH); //buzzer goes off to warn that the temperature is too high! 
-      Serial.println("Temperature is too high!");
-      Serial.println(DHT.temperature); 
-      Serial.println(DHT.humidity); 
-      
-      //Rogier can programme the E-ink Sectiom. 
-      Display();
-      //cut off nutrient supply of water and light. 
-      digitalWrite(LED_STRIP, LOW); 
-      digitalWrite(RELAY, HIGH); 
+    digitalWrite(BUZZER, HIGH); //buzzer goes off to warn that the temperature is too high! 
+    Serial.println("Temperature is too high!");//To be displayed
+    Serial.println(DHT.temperature); 
+    Serial.println(DHT.humidity); 
+    Display();
+    digitalWrite(LED_STRIP, LOW); //Is these two lines a good idea?
+    digitalWrite(PUMP, HIGH); //Basically means the user cannot use device if temp sensor is faulty.
   }
-  else
-  {
-    //once the temp is normal, cut the buzzer and resume normal service. 
-    digitalWrite(BUZZER, LOW);
-    Serial.println("Temperature is ok");
-  }
+  digitalWrite(BUZZER, LOW);//Buzzer is turned off whenever while is not active
+
 }
 
 
 
-void WeightCheck()
-{
-      float weight = WeightSensor.get_units()
-
-      //if the water bottle isn't heavy enough, it won't have enough water to seed the plants. 
-      if (weight < WeightValue)
-      {
-        digitalWrite(BUZZER, HIGH); 
-        Serial.println("Add more water to the water cannister please!") 
-        //Display this on the E-ink display too. 
-        Display();
-        //cut off water supply obviously 
-        digitalWrite(RELAY, HIGH); 
-        digitalWrite(LED_STRIP, LOW); 
-      }
-      else 
-      {
-        digitalWrite(BUZZER, LOW); //could be wrong but I think this is supposed to be LOW and not HIGH so I changed it.
-        Serial.println("Water Bottle is ok!"); 
-      }
+void WeightCheck(){
+  //checks the weight of the water canister.
+  float weight = WeightSensor.get_units()
+  while (weight < WeightValue)
+  {
+    digitalWrite(BUZZER, HIGH); 
+    Serial.println("Add more water to the water canister please!")//to be displayed 
+    Display();
+    digitalWrite(PUMP, HIGH); 
+    digitalWrite(LED_STRIP, LOW); 
+  }
+  digitalWrite(BUZZER, LOW);
 }
 
 void BatteryLevel(){
-
+   //reads the battery level and displays it.
+  //likely will have to allocate a number of "bars" to a discrete battery level and display this by fault on E-INK display.
 }
 
 void Display(){
   //E-ink to be written by Rogier
+  //display time and date by default via RTC
+}
+
+void Ticker(){
+  //ticker to be written by Rob
+  //its basically a delay function that doesnt affect the loop too much.
 }
