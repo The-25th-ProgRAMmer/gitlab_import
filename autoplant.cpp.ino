@@ -56,7 +56,7 @@ void WaterPump(){
   Serial.print("sensor 0 = ");
   Serial.print(moistValue);
   Serial.println("  ");
-  if(moistValue >= dryLimit)
+  if(moistValue <= dryLimit)
   {
     digitalWrite(PUMP, LOW);   
     Serial.print("Pump on"); 
@@ -87,13 +87,13 @@ void TempCheck(){
   //checks the temperature
   while(DHT.temperature > EnclosureTemp)
   {
-    digitalWrite(BUZZER, HIGH); //buzzer goes off to warn that the temperature is too high! 
+    digitalWrite(BUZZER, HIGH); //buzzer goes off to warn that the temperature is too high!
+    //ticker
+    digitalWrite(BUZZER,LOW); 
     Serial.println("Temperature is too high!");//To be displayed
     Serial.println(DHT.temperature); 
     Serial.println(DHT.humidity); 
     Display();
-    digitalWrite(LED_STRIP, LOW); //Is these two lines a good idea?
-    digitalWrite(PUMP, HIGH); //Basically means the user cannot use device if temp sensor is faulty.
   }
   digitalWrite(BUZZER, LOW);//Buzzer is turned off whenever while is not active
 
@@ -106,11 +106,11 @@ void WeightCheck(){
   float weight = WeightSensor.get_units()
   while (weight < WeightValue)
   {
-    digitalWrite(BUZZER, HIGH); 
+    digitalWrite(BUZZER, HIGH);
+    //ticker
+    digitalWrite(BUZZER,LOW);  
     Serial.println("Add more water to the water canister please!")//to be displayed 
     Display();
-    digitalWrite(PUMP, HIGH); 
-    digitalWrite(LED_STRIP, LOW); 
   }
   digitalWrite(BUZZER, LOW);
 }
