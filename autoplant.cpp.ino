@@ -1,6 +1,6 @@
 #include <Wire.h> 
 #include "DS1307.h" 
-#include <dht.h> 
+#include "dht.h" 
 #include "HX711.h" 
 #include "constants.h"
 
@@ -18,7 +18,16 @@ int battery_value = 0;            //read the battery level.
 int dryLimit    = 420;      //most of these, the user should be able to set in app
 int waterLimit  = 420;       
 int EnclosureTemp = 30;     
-float WeightValue = 35.90;      
+float WeightValue = 35.90;
+
+int wateringTick = 0;
+int tempTick = 0;
+int LEDTick = 0;
+int weightTick = 0;      
+int tickDelayPump = 0;
+int tickDelayLED = 0;
+int tickDelayTemp = 0;
+int tickDelayWeight = 0;
 
 int waterHour;//sync with IoT to store the variables.
 int waterMinute;
@@ -53,24 +62,30 @@ void loop(){
 void WaterPump(){
   // Water Pump + Relay Function 
   moistValue = analogRead(MOISTURE_SENSOR);
+  clock.getTime();
   Serial.print("sensor 0 = ");
   Serial.print(moistValue);
   Serial.println("  ");
-  if(moistValue <= dryLimit)
-  {
-    digitalWrite(PUMP, LOW);   
-    Serial.print("Pump on"); 
-    //Ticker function here.
+
+  if(moistValue <= dryLimit || clock.hour == waterHour && clock.minute == waterMinute){
+    // enter if moisture low
+    if (tickDelayPump == 0) {
+      // enter if pump not turned on in last 100 ticks
+      wateringTick = 100;
+      digitalWrite(PUMP, LOW);   
+      Serial.print("Pump on"); 
+      tickDelayPump = 100; 
+    }
+  }
+
+  if(wateringTick == 1){
+    // if pump on ticker reaches 1, send pump off signal
     digitalWrite(PUMP, HIGH);    //pump high = off 
-    Serial.print("Pump off");     
+    Serial.print("Pump off");
   }
-  // Once a day at 11:00:01, water the plants and give it light regardless of moisture levels indicated
-  clock.getTime();
-  if(clock.hour == waterHour && clock.minute == waterMinute){
-    digitalWrite(PUMP, LOW);   
-    //Ticker function to be called here
-    digitalWrite(PUMP, HIGH);    
-  }
+   
+  tickDelayPump = constrain(tickDelayPump-1, 0 , 1000);
+  wateringTick = constrain(wateringTick-1, 0, 100)//decrements tick by 1 and prevents it from going into minus
 }
   
 
@@ -79,24 +94,38 @@ void LEDCheck(){
   //write a function to check the current time and minute then turn on led if the user set time is 
   clock.getTime();
   if(clock.hour == LEDHour && clock.minute == LEDMinute){
-    digitalWrite(LED_STRIP,HIGH);
-    //Ticker function
-    digitalWrite(LED_STRIP,LOW);
+    if(tickDelayLED == 0){
+      LEDTick = 100;
+      digitalWrite(LED_STRIP,HIGH);
+      tickDelayLED = 100;
+    }
+    
+    if(LEDTick == 1){
+      digitalWrite(LED_STRIP,LOW);
+    }
+  }
+  tickDelayLED = constrain(tickDelayLED-1, 0 ,1000);
+  LEDTick = constrain(LEDTick-1,0,1000);
 }
 void TempCheck(){
   //checks the temperature
-  while(DHT.temperature > EnclosureTemp)
+  if(DHT.temperature > EnclosureTemp)
   {
-    digitalWrite(BUZZER, HIGH); //buzzer goes off to warn that the temperature is too high!
-    //ticker
-    digitalWrite(BUZZER,LOW); 
+    if(tickDelayTemp == 0){
+      tempTick = 30;
+      digitalWrite(BUZZER, HIGH); //buzzer goes off to warn that the temperature is too high!
+      tickDelayTemp = 100;
+    }
+    if(tempTick == 1){
+      digitalWrite(BUZZER,LOW);
+    } 
     Serial.println("Temperature is too high!");//To be displayed
     Serial.println(DHT.temperature); 
     Serial.println(DHT.humidity); 
     Display();
   }
-  digitalWrite(BUZZER, LOW);//Buzzer is turned off whenever while is not active
-
+  tickDelayTemp = constrain(tickDelayTemp-1,0,1000);
+  tempTick = constrain(tempTick-1,0,1000);
 }
 
 
@@ -106,13 +135,20 @@ void WeightCheck(){
   float weight = WeightSensor.get_units()
   while (weight < WeightValue)
   {
-    digitalWrite(BUZZER, HIGH);
-    //ticker
-    digitalWrite(BUZZER,LOW);  
+    if(tickDelayWeight == 0){
+      
+      weightTick = 30;
+      digitalWrite(BUZZER, HIGH); //buzzer goes off to warn that the temperature is too high!
+      tickDelayWeight = 30;
+    }
+    if(weightTick == 1){
+      digitalWrite(BUZZER,LOW);
+    }   
     Serial.println("Add more water to the water canister please!")//to be displayed 
     Display();
   }
-  digitalWrite(BUZZER, LOW);
+  tickDelayWeight = constrain(tickDelayWeight-1,0,1000);
+  weightTick = constrain(weightTick-1,0,1000);
 }
 
 void BatteryLevel(){
@@ -125,7 +161,3 @@ void Display(){
   //display time and date by default via RTC
 }
 
-void Ticker(){
-  //ticker to be written by Rob
-  //its basically a delay function that doesnt affect the loop too much.
-}
