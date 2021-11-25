@@ -19,7 +19,6 @@ int dryLimit    = 420;      //most of these, the user should be able to set in a
 int waterLimit  = 420;       
 int EnclosureTemp = 30;     
 float WeightValue = 35.90;
-
 int wateringTick = 0;
 int tempTick = 0;
 int LEDTick = 0;
