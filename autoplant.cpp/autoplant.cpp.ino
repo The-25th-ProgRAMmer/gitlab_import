@@ -1,5 +1,5 @@
 #include <Wire.h> 
-#include <DS1307.h> //oorrect DC1307 grove lobrary 
+#include "DS1307.h" //oorrect DC1307 grove lobrary 
 #include "dht.h" 
 #include "HX711.h" 
 #include "constants.h"
@@ -35,13 +35,14 @@ int LEDHour;//sync with IoT to store the variables.
 int LEDMinute;
 
 // Pushingbox API
+/*
 char *api_server = “api.pushingbox.com”;
 char *deviceId1 = “v7D2202342900F3C”;
 char *deviceId2 = “vC4F10125FFD871F”;
 char *deviceId3 = “v85B903287356B3A”;
 
 int tag = -1; //Relating the sensor to notifications
-
+*/
 void setup(){ 
   Serial.begin(9600);       // start the serial at 9600 baud
   clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
@@ -172,7 +173,7 @@ void Display(){
 }
 
 //Code programmed by Anthony A
-void sendNotification(float sensorValue, int tag) {
+/*void sendNotification(float sensorValue, int tag) {
 Serial.println(“Sending notification to ” + String(api_server));
 if (client.connect(api_server, 80)) {
 Serial.println(“Connected to the server”);
@@ -203,4 +204,4 @@ client.print(message);
 }
 client.stop();
 Serial.println(“Notification sent!”);
-}
+}/*
