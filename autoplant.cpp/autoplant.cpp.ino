@@ -174,7 +174,10 @@ void BatteryLevel(){
   //likely will have to allocate a number of "bars" to a discrete battery level and display this by fault on E-INK display.
    
    //float battery_analog = analogueRead(A7);
-   //float input_volt = (battery_analog * 3.3)/1024 //converts the battery level into an analog voltage 
+   //float input_volt = (battery_analog * 3.3)/1024 //converts the battery level into an analog voltage
+
+   //float battery_percentage = ((((battery_analog/1023) * 3.3) - 2.66)/0.62)*100; 
+   //Serial.println("Battery Percantage is: ");  
   
 }
 
