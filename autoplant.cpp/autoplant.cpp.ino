@@ -39,7 +39,8 @@ char *api_server = “api.pushingbox.com”;
 char *deviceId1 = “v7D2202342900F3C”;
 char *deviceId2 = “vC4F10125FFD871F”;
 char *deviceId3 = “v85B903287356B3A”;
-char *deviceId4 = “vC2C89D2A137C663”;
+
+int tag = -1; //Relating the sensor to notifications
 
 void setup(){ 
   Serial.begin(9600);       // start the serial at 9600 baud
@@ -116,6 +117,7 @@ void LEDCheck(){
 void TempCheck(){
   //checks the temperature
   if(DHT.temperature > EnclosureTemp)
+  tag = 3;
   {
     if(tickDelayTemp == 0){
       tempTick = 30;
@@ -138,6 +140,7 @@ void TempCheck(){
 
 void WeightCheck(){
   //checks the weight of the water canister.
+  tag = 1;
   float weight = scale.get_units();
   while (weight < WeightValue)
   {
@@ -158,6 +161,7 @@ void WeightCheck(){
 }
 
 void BatteryLevel(){
+  tag = 2;
    //reads the battery level and displays it.
   //likely will have to allocate a number of "bars" to a discrete battery level and display this by fault on E-INK display.
 }
@@ -168,14 +172,25 @@ void Display(){
 }
 
 //Code programmed by Anthony A
-void sendNotification(float sensorValue) {
+void sendNotification(float sensorValue, int tag) {
 Serial.println(“Sending notification to ” + String(api_server));
 if (client.connect(api_server, 80)) {
 Serial.println(“Connected to the server”);
-String message = “devid=” + String(deviceId) +
-“&temp=” + String(temp) +
-“&press=” + String(pressure) +
-“\r\n\r\n”;
+String message;
+switch(tag) {
+  case 1:
+    // code block
+    message = “devid=” + String(deviceId1) + “\r\n\r\n”;
+    break;
+  case 2:
+    // code block
+    message = “devid=” + String(deviceId2) + “\r\n\r\n”;
+    break;
+    case 3:
+    // code block
+    message = “devid=” + String(deviceId3) + “\r\n\r\n”;
+    break;
+}
 
 client.print(“POST /pushingbox HTTP/1.1\n”);
 client.print(“Host: api.pushingbox.com\n”);
