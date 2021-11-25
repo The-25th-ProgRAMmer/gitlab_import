@@ -4,10 +4,14 @@
 #include "HX711.h" 
 #include "constants.h"
 
+
+
 //defining sensor objects
 DS1307 clock = DS1307();               
-dht DHT = dht();                 //fixed notation  
+DHT dht(TEMP_SENS, DHT11);              //fixed notation  
 HX711 scale = HX711();           //weight object name changed. 
+
+//describes the battery object. 
 
 //placeholder figure to calibrate sensor (has potential to cause bugs)
 #define calibration_factor -7050.0
@@ -46,9 +50,12 @@ int tag = -1; //Relating the sensor to notifications
 void setup(){ 
   Serial.begin(9600);       // start the serial at 9600 baud
   clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
- 
+  
+  dht.begin();  //running default constructor. 
+
   pinMode(PUMP, OUTPUT);   // set relay pin to output
   pinMode(LED_STRIP, OUTPUT);     // set led pin to output
+
 
   //Weight Sensor Setup. 
   scale.begin(WEIGHT_CLK, WEIGHT_DOUT); //uncommented the constants to get this working. 
@@ -96,7 +103,7 @@ void WaterPump(){
   wateringTick = constrain(wateringTick-1, 0, 100);//decrements tick by 1 and prevents it from going into minus
 }
   
-
+//humidity check
 
 void LEDCheck(){
   //write a function to check the current time and minute then turn on led if the user set time is 
@@ -117,8 +124,8 @@ void LEDCheck(){
 }
 void TempCheck(){
   //checks the temperature
-  if(DHT.temperature > EnclosureTemp)
-  tag = 3;
+  if(dht.readTemperature() > EnclosureTemp)
+  //tag = 3;
   {
     if(tickDelayTemp == 0){
       tempTick = 30;
@@ -129,8 +136,8 @@ void TempCheck(){
       digitalWrite(BUZZER,LOW);
     } 
     Serial.println("Temperature is too high!");//To be displayed
-    Serial.println(DHT.temperature); 
-    Serial.println(DHT.humidity); 
+    Serial.println(dht.readTemperature()); 
+    Serial.println(dht.readHumidity()); 
     Display();
   }
   tickDelayTemp = constrain(tickDelayTemp-1,0,1000);
@@ -141,7 +148,7 @@ void TempCheck(){
 
 void WeightCheck(){
   //checks the weight of the water canister.
-  tag = 1;
+  //tag = 1;
   float weight = scale.get_units();
   while (weight < WeightValue)
   {
@@ -162,9 +169,13 @@ void WeightCheck(){
 }
 
 void BatteryLevel(){
-  tag = 2;
+  //tag = 2;
    //reads the battery level and displays it.
   //likely will have to allocate a number of "bars" to a discrete battery level and display this by fault on E-INK display.
+   
+   //float battery_analog = analogueRead(A7);
+   //float input_volt = (battery_analog * 3.3)/1024 //converts the battery level into an analog voltage 
+  
 }
 
 void Display(){
@@ -204,4 +215,4 @@ client.print(message);
 }
 client.stop();
 Serial.println(“Notification sent!”);
-}/*
+}*/
