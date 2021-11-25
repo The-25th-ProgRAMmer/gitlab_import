@@ -1,5 +1,5 @@
 #include <Wire.h> 
-#include "DS1307.h" 
+#include <DS1307.h> //correct DC1307 grove lobrary 
 #include "dht.h" 
 #include "HX711.h" 
 #include "constants.h"
@@ -7,7 +7,7 @@
 //defining sensor objects
 DS1307 clock = DS1307();               
 dht DHT = dht();                 //fixed notation  
-HX711 WeightSensor = HX711();        
+HX711 scale = HX711();           //weight object name changed. 
 
 //placeholder figure to calibrate sensor (has potential to cause bugs)
 #define calibration_factor -7050.0
@@ -42,9 +42,9 @@ void setup(){
   pinMode(LED_STRIP, OUTPUT);     // set led pin to output
 
   //Weight Sensor Setup. 
-  WeightSensor.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
-  WeightSensor.set_scale(calibration_factor);
-  WeightSensor.tare();   //reset scale to 0 assuming no weight. 
+  scale.begin(WEIGHT_CLK, WEIGHT_DOUT); //uncommented the constants to get this working. 
+  scale.set_scale(calibration_factor);
+  scale.tare();   //reset scale to 0 assuming no weight. 
   
 }
 
@@ -57,7 +57,7 @@ void loop(){
   WaterPump();         
 }
 
-
+//added semicolons where it needed to be done. 
 void WaterPump(){
   // Water Pump + Relay Function 
   moistValue = analogRead(MOISTURE_SENSOR);
@@ -84,7 +84,7 @@ void WaterPump(){
   }
    
   tickDelayPump = constrain(tickDelayPump-1, 0 , 1000);
-  wateringTick = constrain(wateringTick-1, 0, 100)//decrements tick by 1 and prevents it from going into minus
+  wateringTick = constrain(wateringTick-1, 0, 100);//decrements tick by 1 and prevents it from going into minus
 }
   
 
@@ -131,7 +131,7 @@ void TempCheck(){
 
 void WeightCheck(){
   //checks the weight of the water canister.
-  float weight = WeightSensor.get_units()
+  float weight = scale.get_units();
   while (weight < WeightValue)
   {
     if(tickDelayWeight == 0){
@@ -143,7 +143,7 @@ void WeightCheck(){
     if(weightTick == 1){
       digitalWrite(BUZZER,LOW);
     }   
-    Serial.println("Add more water to the water canister please!")//to be displayed 
+    Serial.println("Add more water to the water canister please!");//to be displayed 
     Display();
   }
   tickDelayWeight = constrain(tickDelayWeight-1,0,1000);
@@ -160,3 +160,24 @@ void Display(){
   //display time and date by default via RTC
 }
 
+void sendNotification(float sensorValue) {
+Serial.println(“Sending notification to ” + String(api_server));
+if (client.connect(api_server, 80)) {
+Serial.println(“Connected to the server”);
+String message = “devid=” + String(deviceId) +
+“&temp=” + String(temp) +
+“&press=” + String(pressure) +
+“\r\n\r\n”;
+
+client.print(“POST /pushingbox HTTP/1.1\n”);
+client.print(“Host: api.pushingbox.com\n”);
+client.print(“Connection: close\n”);
+client.print(“Content-Type: application/x-www-form-urlencoded\n”);
+client.print(“Content-Length: “);
+client.print(message.length());
+client.print(“\n\n”);
+client.print(message);
+}
+client.stop();
+Serial.println(“Notification sent!”);
+}
