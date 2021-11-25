@@ -1,5 +1,5 @@
 #include <Wire.h> 
-#include <DS1307.h> //correct DC1307 grove lobrary 
+#include <DS1307.h> //oorrect DC1307 grove lobrary 
 #include "dht.h" 
 #include "HX711.h" 
 #include "constants.h"
@@ -33,6 +33,13 @@ int waterMinute;
 
 int LEDHour;//sync with IoT to store the variables.
 int LEDMinute;
+
+// Pushingbox API
+char *api_server = “api.pushingbox.com”;
+char *deviceId1 = “v7D2202342900F3C”;
+char *deviceId2 = “vC4F10125FFD871F”;
+char *deviceId3 = “v85B903287356B3A”;
+char *deviceId4 = “vC2C89D2A137C663”;
 
 void setup(){ 
   Serial.begin(9600);       // start the serial at 9600 baud
@@ -160,6 +167,7 @@ void Display(){
   //display time and date by default via RTC
 }
 
+//Code programmed by Anthony A
 void sendNotification(float sensorValue) {
 Serial.println(“Sending notification to ” + String(api_server));
 if (client.connect(api_server, 80)) {
