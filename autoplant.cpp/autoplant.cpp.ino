@@ -11,13 +11,11 @@ DS1307 clock = DS1307();
 DHT dht(TEMP_SENS, DHT11);              //fixed notation  
 HX711 scale = HX711();           //weight object name changed. 
 
-//describes the battery object. 
-
 //placeholder figure to calibrate sensor (has potential to cause bugs)
 #define calibration_factor -7050.0
 
 int moistValue = 0;              // read moisture value 
-int battery_value = 0;            //read the battery level. 
+int batteryValue = 0;            //read the battery level. 
 
 int dryLimit    = 420;      //most of these, the user should be able to set in app
 int waterLimit  = 420;       
@@ -31,6 +29,11 @@ int tickDelayPump = 0;
 int tickDelayLED = 0;
 int tickDelayTemp = 0;
 int tickDelayWeight = 0;
+
+float t;
+float h;
+
+float weight;
 
 int waterHour;//sync with IoT to store the variables.
 int waterMinute;
@@ -48,29 +51,32 @@ char *deviceId3 = “v85B903287356B3A”;
 int tag = -1; //Relating the sensor to notifications
 */
 void setup(){ 
-  Serial.begin(9600);       // start the serial at 9600 baud
-  clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
+  //Serial.begin(9600);       // start the serial at 9600 baud
+  //clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
   
-  dht.begin();  //running default constructor. 
+  //dht.begin();
 
-  pinMode(PUMP, OUTPUT);   // set relay pin to output
+  pinMode(2, OUTPUT);   // set relay pin to output
   pinMode(LED_STRIP, OUTPUT);     // set led pin to output
-
-
+  digitalWrite(LED_STRIP,HIGH);
   //Weight Sensor Setup. 
-  scale.begin(WEIGHT_CLK, WEIGHT_DOUT); //uncommented the constants to get this working. 
-  scale.set_scale(calibration_factor);
-  scale.tare();   //reset scale to 0 assuming no weight. 
+  //scale.begin(WEIGHT_CLK, WEIGHT_DOUT); //uncommented the constants to get this working. 
+  //scale.set_scale(calibration_factor);
+  //scale.tare();   //reset scale to 0 assuming no weight. 
   
 }
 
 void loop(){
-  Display();              
-  TempCheck();            
-  WeightCheck();          
-  BatteryLevel();
-  LEDCheck();
-  WaterPump();         
+  //Display();              
+  //TempCheck();            
+  //WeightCheck();          
+  //BatteryLevel();
+  digitalWrite(2,HIGH);
+  delay(1000);
+  digitalWrite(2,LOW);
+  delay(1000);
+  //LEDCheck();
+  //WaterPump();         
 }
 
 //added semicolons where it needed to be done. 
@@ -124,7 +130,9 @@ void LEDCheck(){
 }
 void TempCheck(){
   //checks the temperature
-  if(dht.readTemperature() > EnclosureTemp)
+  t = dht.readTemperature();
+  h = dht.readHumidity();
+  if(t > EnclosureTemp)
   //tag = 3;
   {
     if(tickDelayTemp == 0){
@@ -136,8 +144,8 @@ void TempCheck(){
       digitalWrite(BUZZER,LOW);
     } 
     Serial.println("Temperature is too high!");//To be displayed
-    Serial.println(dht.readTemperature()); 
-    Serial.println(dht.readHumidity()); 
+    Serial.println(t); 
+    Serial.println(h); 
     Display();
   }
   tickDelayTemp = constrain(tickDelayTemp-1,0,1000);
@@ -149,7 +157,7 @@ void TempCheck(){
 void WeightCheck(){
   //checks the weight of the water canister.
   //tag = 1;
-  float weight = scale.get_units();
+  weight = scale.get_units();
   while (weight < WeightValue)
   {
     if(tickDelayWeight == 0){
@@ -172,10 +180,6 @@ void BatteryLevel(){
   //tag = 2;
    //reads the battery level and displays it.
   //likely will have to allocate a number of "bars" to a discrete battery level and display this by fault on E-INK display.
-   
-   //float battery_analog = analogueRead(A7);
-   //float input_volt = (battery_analog * 3.3)/1024 //converts the battery level into an analog voltage 
-  
 }
 
 void Display(){
