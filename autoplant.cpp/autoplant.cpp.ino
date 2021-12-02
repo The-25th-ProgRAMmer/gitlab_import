@@ -17,7 +17,7 @@ HX711 scale;         //weight object name changed.
 int moistValue = 0;              // read moisture value 
 int batteryValue = 0;            //read the battery level. 
 
-int dryLimit    = 420;      //most of these, the user should be able to set in app
+int dryLimit    = 750;      //most of these, the user should be able to set in app
 int waterLimit  = 420;       
 int EnclosureTemp = 30;     
 float WeightValue = 35.90;
@@ -35,8 +35,8 @@ float h;
 
 float weight;
 
-int waterHour;//sync with IoT to store the variables.
-int waterMinute;
+int waterHour = 11;//sync with IoT to store the variables.
+int waterMinute = 00;
 
 int LEDHour;//sync with IoT to store the variables.
 int LEDMinute;
@@ -52,13 +52,24 @@ int tag = -1; //Relating the sensor to notifications
 */
 void setup(){ 
   Serial.begin(9600);       // start the serial at 9600 baud
+<<<<<<< HEAD
   //clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
+=======
+  clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
+>>>>>>> cb920b0a0b51044352588433bbbd8528195ac19b
   
-  //dht.begin();
+  dht.begin();
 
   pinMode(2, OUTPUT);   // set relay pin to output
   pinMode(LED_STRIP, OUTPUT);     // set led pin to output
+<<<<<<< HEAD
   digitalWrite(LED_STRIP,HIGH);
+=======
+  //Weight Sensor Setup. 
+  //scale.begin(WEIGHT_CLK, WEIGHT_DOUT); //uncommented the constants to get this working. 
+  scale.set_scale(calibration_factor);
+  scale.tare();   //reset scale to 0 assuming no weight. 
+>>>>>>> cb920b0a0b51044352588433bbbd8528195ac19b
   
 }
 
@@ -91,6 +102,7 @@ void loop()
   //TempCheck();            
   WeightCheck();          
   //BatteryLevel();
+<<<<<<< HEAD
 
   if (digitalRead(2) == LOW)
   {
@@ -101,11 +113,14 @@ void loop()
     Serial.print("Problem"); 
   }
 
+=======
+>>>>>>> cb920b0a0b51044352588433bbbd8528195ac19b
   //digitalWrite(2,HIGH);
   //delay(1000);
   //digitalWrite(2,LOW);
   //delay(1000);
   //LEDCheck();
+<<<<<<< HEAD
   //WaterPump(); 
 
   if (digitalRead(2) == LOW)
@@ -117,18 +132,23 @@ void loop()
     Serial.print("Problem"); 
   }
 
+=======
+  WaterPump();        
+>>>>>>> cb920b0a0b51044352588433bbbd8528195ac19b
 }
 
 //added semicolons where it needed to be done. 
 void WaterPump(){
   // Water Pump + Relay Function 
   moistValue = analogRead(MOISTURE_SENSOR);
-  clock.getTime();
-  Serial.print("sensor 0 = ");
+  Serial.print("Moisture:");
   Serial.print(moistValue);
-  Serial.println("  ");
+  clock.getTime();
+  //Serial.print("sensor 0 = \n");
+  //Serial.print(moistValue);
+  Serial.println("\n");
 
-  if(moistValue <= dryLimit || clock.hour == waterHour && clock.minute == waterMinute){
+  if(moistValue <= dryLimit || (clock.hour == waterHour && clock.minute == waterMinute)){
     // enter if moisture low
     if (tickDelayPump == 0) {
       // enter if pump not turned on in last 100 ticks
@@ -137,6 +157,10 @@ void WaterPump(){
       Serial.print("Pump on"); 
       tickDelayPump = 100; 
     }
+    else if(tickDelayPump ==1){
+      digitalWrite(PUMP,HIGH);
+      Serial.print("PUMP COOLDOWN");
+      }
   }
 
   if(wateringTick == 1){
@@ -144,9 +168,14 @@ void WaterPump(){
     digitalWrite(PUMP, HIGH);    //pump high = off 
     Serial.print("Pump off");
   }
-   
+  Serial.print("Tickdelay:");
+  Serial.print(tickDelayPump);
+  Serial.print("\n");
+  Serial.print("wateringtick:");
+  Serial.print(wateringTick);
   tickDelayPump = constrain(tickDelayPump-1, 0 , 1000);
-  wateringTick = constrain(wateringTick-1, 0, 100);//decrements tick by 1 and prevents it from going into minus
+  wateringTick = constrain(wateringTick-1, 0, 1000);//decrements tick by 1 and prevents it from going into minus
+  delay(200);
 }
   
 //humidity check
@@ -220,8 +249,6 @@ void BatteryLevel(){
   //tag = 2;
    //reads the battery level and displays it.
   //likely will have to allocate a number of "bars" to a discrete battery level and display this by fault on E-INK display.
-<<<<<<< HEAD
-=======
    
    //float battery_analog = analogueRead(A7);
    //float input_volt = (battery_analog * 3.3)/1024 //converts the battery level into an analog voltage
@@ -229,7 +256,6 @@ void BatteryLevel(){
    //float battery_percentage = ((((battery_analog/1023) * 3.3) - 2.66)/0.62)*100; 
    //Serial.println("Battery Percantage is: ");  
   
->>>>>>> 0ae70b19ee98aacabe448bbde6556cb30326bd22
 }
 
 void Display(){
