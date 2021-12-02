@@ -9,7 +9,7 @@
 //defining sensor objects
 DS1307 clock = DS1307();               
 DHT dht(TEMP_SENS, DHT11);              //fixed notation  
-HX711 scale = HX711();           //weight object name changed. 
+HX711 scale;         //weight object name changed. 
 
 //placeholder figure to calibrate sensor (has potential to cause bugs)
 #define calibration_factor -7050.0
@@ -51,7 +51,7 @@ char *deviceId3 = “v85B903287356B3A”;
 int tag = -1; //Relating the sensor to notifications
 */
 void setup(){ 
-  //Serial.begin(9600);       // start the serial at 9600 baud
+  Serial.begin(9600);       // start the serial at 9600 baud
   //clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
   
   //dht.begin();
@@ -59,24 +59,64 @@ void setup(){
   pinMode(2, OUTPUT);   // set relay pin to output
   pinMode(LED_STRIP, OUTPUT);     // set led pin to output
   digitalWrite(LED_STRIP,HIGH);
-  //Weight Sensor Setup. 
-  //scale.begin(WEIGHT_CLK, WEIGHT_DOUT); //uncommented the constants to get this working. 
-  //scale.set_scale(calibration_factor);
-  //scale.tare();   //reset scale to 0 assuming no weight. 
   
 }
 
-void loop(){
+void loop()
+{
+  if (digitalRead(2) == LOW)
+  {
+    Serial.print("No Problem"); 
+  }
+  else
+  {
+    Serial.print("Problem"); 
+  }        
+
+  //Weight Sensor Setup. 
+  scale.begin(WEIGHT_CLK, WEIGHT_DOUT); //uncommented the constants to get this working. 
+  scale.set_scale(calibration_factor);
+  scale.tare();   //reset scale to 0 assuming no weight. 
+
+  if (digitalRead(2) == LOW)
+  {
+    Serial.print("No Problem"); 
+  } 
+  else
+  {
+    Serial.print("Problem"); 
+  }
+  
   //Display();              
   //TempCheck();            
-  //WeightCheck();          
+  WeightCheck();          
   //BatteryLevel();
-  digitalWrite(2,HIGH);
-  delay(1000);
-  digitalWrite(2,LOW);
-  delay(1000);
+
+  if (digitalRead(2) == LOW)
+  {
+    Serial.print("No Problem"); 
+  } 
+  else
+  {
+    Serial.print("Problem"); 
+  }
+
+  //digitalWrite(2,HIGH);
+  //delay(1000);
+  //digitalWrite(2,LOW);
+  //delay(1000);
   //LEDCheck();
-  //WaterPump();         
+  //WaterPump(); 
+
+  if (digitalRead(2) == LOW)
+  {
+    Serial.print("No Problem"); 
+  } 
+  else 
+  {
+    Serial.print("Problem"); 
+  }
+
 }
 
 //added semicolons where it needed to be done. 
