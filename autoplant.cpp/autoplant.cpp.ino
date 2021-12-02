@@ -20,7 +20,7 @@ int batteryValue = 0;            //read the battery level.
 int dryLimit    = 750;      //most of these, the user should be able to set in app
 int waterLimit  = 420;       
 int EnclosureTemp = 30;     
-float WeightValue = 35.90;
+float WeightValue = 0.01;
 int wateringTick = 0;
 int tempTick = 0;
 int LEDTick = 0;
@@ -33,7 +33,7 @@ int tickDelayWeight = 0;
 float t;
 float h;
 
-float weight;
+float weight=1;
 
 int waterHour = 11;//sync with IoT to store the variables.
 int waterMinute = 00;
@@ -52,24 +52,18 @@ int tag = -1; //Relating the sensor to notifications
 */
 void setup(){ 
   Serial.begin(9600);       // start the serial at 9600 baud
-<<<<<<< HEAD
   //clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
-=======
   clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
->>>>>>> cb920b0a0b51044352588433bbbd8528195ac19b
   
   dht.begin();
 
   pinMode(2, OUTPUT);   // set relay pin to output
   pinMode(LED_STRIP, OUTPUT);     // set led pin to output
-<<<<<<< HEAD
   digitalWrite(LED_STRIP,HIGH);
-=======
-  //Weight Sensor Setup. 
+  //Weight Sensor Setup.
+  Serial.print("stops here?"); 
   //scale.begin(WEIGHT_CLK, WEIGHT_DOUT); //uncommented the constants to get this working. 
-  scale.set_scale(calibration_factor);
-  scale.tare();   //reset scale to 0 assuming no weight. 
->>>>>>> cb920b0a0b51044352588433bbbd8528195ac19b
+  Serial.print("stops here2?"); 
   
 }
 
@@ -85,9 +79,9 @@ void loop()
   }        
 
   //Weight Sensor Setup. 
-  scale.begin(WEIGHT_CLK, WEIGHT_DOUT); //uncommented the constants to get this working. 
+  /*scale.begin(WEIGHT_DOUT, WEIGHT_CLK); //uncommented the constants to get this working. 
   scale.set_scale(calibration_factor);
-  scale.tare();   //reset scale to 0 assuming no weight. 
+  scale.tare();   //reset scale to 0 assuming no weight. */
 
   if (digitalRead(2) == LOW)
   {
@@ -102,39 +96,12 @@ void loop()
   //TempCheck();            
   WeightCheck();          
   //BatteryLevel();
-<<<<<<< HEAD
-
-  if (digitalRead(2) == LOW)
-  {
-    Serial.print("No Problem"); 
-  } 
-  else
-  {
-    Serial.print("Problem"); 
-  }
-
-=======
->>>>>>> cb920b0a0b51044352588433bbbd8528195ac19b
   //digitalWrite(2,HIGH);
   //delay(1000);
   //digitalWrite(2,LOW);
   //delay(1000);
   //LEDCheck();
-<<<<<<< HEAD
-  //WaterPump(); 
-
-  if (digitalRead(2) == LOW)
-  {
-    Serial.print("No Problem"); 
-  } 
-  else 
-  {
-    Serial.print("Problem"); 
-  }
-
-=======
   WaterPump();        
->>>>>>> cb920b0a0b51044352588433bbbd8528195ac19b
 }
 
 //added semicolons where it needed to be done. 
@@ -226,7 +193,7 @@ void TempCheck(){
 void WeightCheck(){
   //checks the weight of the water canister.
   //tag = 1;
-  weight = scale.get_units();
+  //weight = scale.get_units();
   while (weight < WeightValue)
   {
     if(tickDelayWeight == 0){
