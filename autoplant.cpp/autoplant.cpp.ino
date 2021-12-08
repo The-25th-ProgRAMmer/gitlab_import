@@ -3,24 +3,25 @@
 #include "dht.h" 
 #include "HX711.h" 
 #include "constants.h"
-
-
+#include <iostream>
 
 //defining sensor objects
 DS1307 clock = DS1307();               
 DHT dht(TEMP_SENS, DHT11);              //fixed notation  
-HX711 scale;         //weight object name changed. 
+HX711 scale = HX711();           //weight object name changed. 
+
+//describes the battery object. 
 
 //placeholder figure to calibrate sensor (has potential to cause bugs)
 #define calibration_factor -7050.0
 
-int moistValue = 0;              // read moisture value 
-int batteryValue = 0;            //read the battery level. 
+int moistValue = 430;              // read moisture value 
+int battery_value = 0;            //read the battery level. 
 
-int dryLimit    = 750;      //most of these, the user should be able to set in app
+int dryLimit    = 780;      //most of these, the user should be able to set in app
 int waterLimit  = 420;       
-int EnclosureTemp = 30;     
-float WeightValue = 0.01;
+int EnclosureTemp = 18;     
+float WeightValue = 35.90;
 int wateringTick = 0;
 int tempTick = 0;
 int LEDTick = 0;
@@ -30,13 +31,8 @@ int tickDelayLED = 0;
 int tickDelayTemp = 0;
 int tickDelayWeight = 0;
 
-float t;
-float h;
-
-float weight=1;
-
-int waterHour = 11;//sync with IoT to store the variables.
-int waterMinute = 00;
+int waterHour;//sync with IoT to store the variables.
+int waterMinute;
 
 int LEDHour;//sync with IoT to store the variables.
 int LEDMinute;
@@ -52,96 +48,71 @@ int tag = -1; //Relating the sensor to notifications
 */
 void setup(){ 
   Serial.begin(9600);       // start the serial at 9600 baud
-  //clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
   clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
-  
-  dht.begin();
+  dht.begin();  //running default constructor 
 
-  pinMode(2, OUTPUT);   // set relay pin to output
+  pinMode(PUMP, OUTPUT);   // set relay pin to output
   pinMode(LED_STRIP, OUTPUT);     // set led pin to output
-  digitalWrite(LED_STRIP,HIGH);
-  //Weight Sensor Setup.
-  Serial.print("stops here?"); 
+
+  
+
+
+  //Weight Sensor Setup. 
   //scale.begin(WEIGHT_CLK, WEIGHT_DOUT); //uncommented the constants to get this working. 
-  Serial.print("stops here2?"); 
+  //scale.set_scale(calibration_factor);
+  //scale.tare();   //reset scale to 0 assuming no weight. 
   
 }
 
-void loop()
-{
-  if (digitalRead(2) == LOW)
-  {
-    Serial.print("No Problem"); 
-  }
-  else
-  {
-    Serial.print("Problem"); 
-  }        
-
-  //Weight Sensor Setup. 
-  /*scale.begin(WEIGHT_DOUT, WEIGHT_CLK); //uncommented the constants to get this working. 
-  scale.set_scale(calibration_factor);
-  scale.tare();   //reset scale to 0 assuming no weight. */
-
-  if (digitalRead(2) == LOW)
-  {
-    Serial.print("No Problem"); 
-  } 
-  else
-  {
-    Serial.print("Problem"); 
-  }
-  
-  //Display();              
-  //TempCheck();            
-  WeightCheck();          
-  //BatteryLevel();
-  //digitalWrite(2,HIGH);
-  //delay(1000);
-  //digitalWrite(2,LOW);
-  //delay(1000);
-  //LEDCheck();
-  WaterPump();        
+void loop(){
+ //digitalWrite(PUMP,LOW);
+ 
+ //Display();              
+ //TempCheck();          
+ //WeightCheck();          
+ //BatteryLevel();
+ LEDCheck();
+ //digitalWrite(PUMP,HIGH);
+ //WaterPump();
+//digitalWrite(BUZZER,HIGH);
+//delay(200);
+//digitalWrite(BUZZER,LOW);
 }
 
 //added semicolons where it needed to be done. 
 void WaterPump(){
   // Water Pump + Relay Function 
   moistValue = analogRead(MOISTURE_SENSOR);
-  Serial.print("Moisture:");
-  Serial.print(moistValue);
   clock.getTime();
-  //Serial.print("sensor 0 = \n");
-  //Serial.print(moistValue);
+  Serial.print("moisture = ");
+  Serial.print(moistValue);
   Serial.println("\n");
 
-  if(moistValue <= dryLimit || (clock.hour == waterHour && clock.minute == waterMinute)){
+  if(moistValue <= dryLimit /*|| (clock.hour == waterHour && clock.minute == waterMinute)*/){
     // enter if moisture low
     if (tickDelayPump == 0) {
       // enter if pump not turned on in last 100 ticks
       wateringTick = 100;
-      digitalWrite(PUMP, LOW);   
+      //digitalWrite(PUMP, LOW);   
+      digitalWrite(BUZZER,HIGH);
       Serial.print("Pump on"); 
       tickDelayPump = 100; 
     }
-    else if(tickDelayPump ==1){
-      digitalWrite(PUMP,HIGH);
-      Serial.print("PUMP COOLDOWN");
-      }
   }
 
   if(wateringTick == 1){
     // if pump on ticker reaches 1, send pump off signal
-    digitalWrite(PUMP, HIGH);    //pump high = off 
+    //digitalWrite(PUMP, HIGH);    //pump high = off 
+    digitalWrite(BUZZER,LOW);
     Serial.print("Pump off");
   }
-  Serial.print("Tickdelay:");
-  Serial.print(tickDelayPump);
-  Serial.print("\n");
-  Serial.print("wateringtick:");
-  Serial.print(wateringTick);
+   
   tickDelayPump = constrain(tickDelayPump-1, 0 , 1000);
-  wateringTick = constrain(wateringTick-1, 0, 1000);//decrements tick by 1 and prevents it from going into minus
+  wateringTick = constrain(wateringTick-1, 0, 100);//decrements tick by 1 and prevents it from going into minus
+  Serial.println("tick delay: ");
+  Serial.print(tickDelayPump);
+  Serial.println("\nwateringTick");
+  Serial.print(wateringTick);
   delay(200);
 }
   
@@ -150,7 +121,9 @@ void WaterPump(){
 void LEDCheck(){
   //write a function to check the current time and minute then turn on led if the user set time is 
   clock.getTime();
-  if(clock.hour == LEDHour && clock.minute == LEDMinute){
+  //if(clock.hour == LEDHour && clock.minute == LEDMinute){
+  Serial.print(tickDelayLED);
+  Serial.print("\n");
     if(tickDelayLED == 0){
       LEDTick = 100;
       digitalWrite(LED_STRIP,HIGH);
@@ -159,30 +132,31 @@ void LEDCheck(){
     
     if(LEDTick == 1){
       digitalWrite(LED_STRIP,LOW);
+      Serial.print("strip off");
+      delay(1000);
     }
-  }
+  //}
   tickDelayLED = constrain(tickDelayLED-1, 0 ,1000);
   LEDTick = constrain(LEDTick-1,0,1000);
 }
 void TempCheck(){
   //checks the temperature
-  t = dht.readTemperature();
-  h = dht.readHumidity();
-  if(t > EnclosureTemp)
+  if(trunc(dht.readTemperature()) > EnclosureTemp)
   //tag = 3;
   {
-    if(tickDelayTemp == 0){
+    
+    /*if(tickDelayTemp == 0){
       tempTick = 30;
       digitalWrite(BUZZER, HIGH); //buzzer goes off to warn that the temperature is too high!
       tickDelayTemp = 100;
     }
     if(tempTick == 1){
       digitalWrite(BUZZER,LOW);
-    } 
+    } */
     Serial.println("Temperature is too high!");//To be displayed
-    Serial.println(t); 
-    Serial.println(h); 
-    Display();
+    Serial.println(dht.readTemperature()); 
+    Serial.println(dht.readHumidity()); 
+    //Display();
   }
   tickDelayTemp = constrain(tickDelayTemp-1,0,1000);
   tempTick = constrain(tempTick-1,0,1000);
@@ -193,7 +167,7 @@ void TempCheck(){
 void WeightCheck(){
   //checks the weight of the water canister.
   //tag = 1;
-  //weight = scale.get_units();
+  float weight = scale.get_units();
   while (weight < WeightValue)
   {
     if(tickDelayWeight == 0){
