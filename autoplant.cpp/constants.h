@@ -6,7 +6,7 @@ const int LED_STRIP = 6;         //LED STRIP on and off
 const int TEMP_SENS = 5;         //temperature pin set to D5
 
 
-const int WEIGHT_CLK = A4;        //CLK Pin and Data out pin to the nanoboard. 
-const int WEIGHT_DOUT = A5; 
+const int WEIGHT_CLK = A5;        //CLK Pin and Data out pin to the nanoboard. 
+const int WEIGHT_DOUT = A4;
 
 //const int BATTERY_PIN = D5; 
