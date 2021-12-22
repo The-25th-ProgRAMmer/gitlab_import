@@ -2,7 +2,7 @@
 
 This is a repository that holds all the relevant libraries and files needed to make an Autonomous Plant Incubator using an Arduino Nano 33 IoT, a Moisture sensor, a Temperature & Humidity sensor, Water pump, Full spectrum LED strip and an E-Ink Display.
 
-##Features
+## Features
 The Autonomous Plant incubator can do all of the following:
 * Allow the user to set watering and lighting times
 * Adjust the expected dryness for their specific Plant
@@ -12,7 +12,7 @@ The Autonomous Plant incubator can do all of the following:
 * Warnings when Water or Battery is low
 * Remotely control via Arduino IoT cloud
 
-##Structure
+## Structure
 The autoplant.cpp file holds all of the code that is run by the Arduino. It contains a setup() and loop() function.
 
 The setup() function is ran when the Arduino is first turned on.
@@ -26,7 +26,7 @@ Another example, If the lighting hours are met then LEDCheck() will turn on the 
 
 We have also used a ticker function that allows us to create 'delays' without interupting the flow of the program. An alternative to this would be to use Millis but in some cases that would require more lines of code, although potentially less variables to store tickers. This is an adaptation we might include in the future.
 
-##Prerequisites
+## Prerequisites
 Please find the following prerequisites inside the repo:
 *  DS1307.h & DS1307.cpp
 *  HX711.h & HX711.cpp
