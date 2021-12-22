@@ -6,9 +6,9 @@ This is a repository that holds all the relevant libraries and files needed to m
 The Autonomous Plant incubator can do all of the following:
 * Allow the user to set watering and lighting times
 * Adjust the expected dryness for their specific Plant
-* Water automatically dispenses if soil is too dry or it is the correct time.
-* Emit Red/Blue light if it is the correct time.
-* Display the readings on the display as well as remotely
+* Water automatically dispenses if soil is too dry or it is the user-defined time.
+* Emit Red/Blue light if it is the user-defined time.
+* Display the readings on the display as well as remotely on app.
 * Warnings when Water or Battery is low
 * Remotely control via Arduino IoT cloud
 
