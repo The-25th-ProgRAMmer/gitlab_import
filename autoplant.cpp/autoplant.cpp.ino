@@ -38,7 +38,7 @@
 //defining sensor objects          
 DHT dht(TEMP_SENS, DHT11);              //fixed notation  
 HX711 scale = HX711();           //weight object name changed.
-RTCZero clock; 
+RTCZero rtc_wifi; 
 
 //describes the battery object. 
 
@@ -111,9 +111,9 @@ int tag = -1; //Relating the sensor to notifications
 
 void RealTimeSet()    
 {
-  set_hour = clock.getHours();
-  set_minute = clock.getMinutes();
-  set_second = clock.getSeconds();
+  set_hour = rtc_wifi.getHours();
+  set_minute = rtc_wifi.getMinutes();
+  set_second = rtc_wifi.getSeconds();
 }
 
 
@@ -164,7 +164,7 @@ void setup() {
   
   Serial.print("startup");
   
-  clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
+  rtc_wifi.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
   dht.begin();  //running default constructor 
 
   pinMode(PUMP, OUTPUT);   // set relay pin to output
@@ -194,13 +194,42 @@ void setup() {
     status = WiFi.begin(ssid, pass);
 
     // wait 10 seconds for connection:
-    delay(10000);
+    delay(10000);}
+
+  // Variable to represent epoch
+  unsigned long epoch;
+
+  // Variable for number of tries to NTP service
+  int numberOfTries = 0, maxTries = 6;
+
+  // Get epoch
+  do {
+    epoch = WiFi.getTime();
+    numberOfTries++;
+  }
+ 
+  while ((epoch == 0) && (numberOfTries < maxTries));
+ 
+    if (numberOfTries == maxTries) {
+    Serial.print("NTP unreachable!!");
+    while (1);
+    }
+ 
+    else {
+    Serial.print("Epoch received: ");
+    Serial.println(epoch);
+    rtc_wifi.setEpoch(epoch + GMT * 60 *60);
+    Serial.println();
+    }
+
+  initRealTime();
+  Serial.println("Initializing real time done.");
     
     // you're connected now, so print out the data:
   Serial.println("You're connected to the network");
   Serial.println("---------------------------------------");
-}
-Serial.println("outside connection loop");
+
+  Serial.println("outside connection loop");
 }
 
 void loop() {
