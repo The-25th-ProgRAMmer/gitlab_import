@@ -95,6 +95,32 @@ char *deviceId3 = “v85B903287356B3A”;
 int tag = -1; //Relating the sensor to notifications
 */
 
+//edit as required. 
+//internet connectivity to get time code 
+#include <WiFiNINA.h>
+#include <WiFiUdp.h>
+#include <RTCZero.h> 
+
+char *ssid = " ";  //  WiFi credentials and setup
+char *password = " ";
+const int GMT = 0;
+  
+RTCZero clock;    //called it clock to avoid any confusion. 
+
+  int status = WL_IDLE_STATUS;
+  byte set_hour = 0;
+  byte set_minute = 0;
+  byte set_second = 0;
+
+  //sets the real time using wifi. The clock object will have these values assigned.
+void RealTimeSet()    
+{
+  set_hour = clock.getHours();
+  set_minute = clock.getMinutes();
+  set_second = clock.getSeconds();
+}
+
+
 void setup() {
   // Initialize serial and wait for port to open:
   Serial.begin(9600);
@@ -122,8 +148,24 @@ void setup() {
   //------------------------------------
   
   Serial.print("startup");
+
+  //starting wifi connection for RTC
+
+  while (status != WL_IDLE_STATUS)
+  {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    status = WiFi.begin(ssid, password);
+  }
+
+  clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement  
+  RealTimeSet();
+  Serial.println("Initializing real time done.");
+
   
-  //clock.begin();            //TODO: beginning the clock every time it starts can mess with it. Need to have oscillating if statement
+  //calls function to set the time. 
+  
+  
   dht.begin();  //running default constructor 
 
   pinMode(PUMP, OUTPUT);   // set relay pin to output
