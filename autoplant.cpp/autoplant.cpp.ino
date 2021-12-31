@@ -277,7 +277,7 @@ void WaterPump(){
   Serial.print("\n");
   dryLimit = 720;
 
-  if(moistValue <= dryLimit /*|| (clock.hour == waterHour && clock.minute == waterMinute)*/){
+  if(moistValue <= dryLimit || (clock.hour == waterHour && clock.minute == waterMinute)){
     // enter if moisture 
     
     if (tickDelayPump == 0) {//set to 0 at start
@@ -301,10 +301,6 @@ void WaterPump(){
    
   tickDelayPump = constrain(tickDelayPump-1, 0 , 1000);//decrement each loop stop it at 0
   wateringTick = constrain(wateringTick-1, 0, 1000);//decrements tick by 1 and prevents it from going into minus 
-  Serial.print("tick delay: ");
-  Serial.print(tickDelayPump);
-  Serial.print("\nwateringTick: ");
-  Serial.print(wateringTick);
 }
   
 //humidity check
@@ -312,14 +308,14 @@ void WaterPump(){
 void LEDCheck(){
   //write a function to check the current time and minute then turn on led if the user set time is 
   //clock.getTime();
-  //if(clock.hour == LEDHour && clock.minute == LEDMinute){
-  Serial.print(tickDelayLED);
-  Serial.print("\n");
+  if(clock.hour == LEDHour && clock.minute == LEDMinute){
+    Serial.print(tickDelayLED);
+    Serial.print("\n");
     if(tickDelayLED == 0){
       LEDTick = 100;
       digitalWrite(LED_STRIP,HIGH);
       tickDelayLED = 100;
-    }
+    }//TODO: remove the ticker from this, implement internet time.
     
     if(LEDTick == 1){
       digitalWrite(LED_STRIP,LOW);
@@ -337,20 +333,19 @@ void TempCheck(){
   if(temperature > EnclosureTemp)
   //tag = 3;
   {
-    
-    /*if(tickDelayTemp == 0){
+    if(tickDelayTemp == 0){
       tempTick = 30;
       digitalWrite(BUZZER, HIGH); //buzzer goes off to warn that the temperature is too high!
-      tickDelayTemp = 100;
+      Serial.print("Buzzer active");
+      Serial.println("Temperature is too high!");
+      tickDelayTemp = 1;
     }
+  }
     if(tempTick == 1){
       digitalWrite(BUZZER,LOW);
-    } */
-    Serial.println("Temperature is too high!");//To be displayed
-    Serial.println(dht.readTemperature()); 
-    Serial.println(dht.readHumidity()); 
-    //Display();
-  }
+      Serial.print("Buzzer off");
+      tickDelayTemp = 100;
+    } 
   tickDelayTemp = constrain(tickDelayTemp-1,0,1000);
   tempTick = constrain(tempTick-1,0,1000);
 }
@@ -360,9 +355,6 @@ void TempCheck(){
 void WeightCheck(){
   //checks the weight of the water canister.
   weight = scale.get_units();
-  Serial.print("weight= ");
-  Serial.print(weight);
-  Serial.print("\n");
   if (weight < WeightValue)
   {
     if(tickDelayWeight == 0){
@@ -370,7 +362,6 @@ void WeightCheck(){
       weightTick = 30;
       digitalWrite(BUZZER, HIGH); //buzzer goes off to warn that the temperature is too high!
       Serial.print("Refill water");
-      Serial.print("\n");
       tickDelayWeight = 1;
     }
   }
@@ -378,20 +369,8 @@ void WeightCheck(){
       digitalWrite(BUZZER,LOW);
       tickDelayWeight = 100;
     }   
-    //Serial.println("Add more water to the water canister please!");//to be displayed 
-    //Display();
-  if (weight >= WeightValue){
-    Serial.print("sufficient water");
-    Serial.print("\n");
-    }
   tickDelayWeight = constrain(tickDelayWeight-1,0,1000);
   weightTick = constrain(weightTick-1,0,1000);
-  Serial.print("tickdelayWeight: ");
-  Serial.print(tickDelayWeight);
-  Serial.print("\n");
-  Serial.print("weightTick: ");
-  Serial.print(weightTick);
-  Serial.print("\n");
 }
 
 void BatteryLevel(){
